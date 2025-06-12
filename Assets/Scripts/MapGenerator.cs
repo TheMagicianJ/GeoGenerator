@@ -33,12 +33,15 @@ public class MapGenerator : MonoBehaviour
 
 
 
-    public void GenerateMap(){
+     public void GenerateMap()
+     {
 
-        float[,] noiseMap = Noise.CreateNoiseMap( seed, width , height,noiseScale, octaves, persistence, lacunarity);
-        meshGenerator = FindObjectOfType<MeshGenerator>();
-        meshGenerator.CreateGrid(noiseMap,heightMultiplier, multiplierCurve, detail);
-        meshGenerator.UpdateMesh();
+          float[,] noiseMap = Noise.CreateNoiseMap(seed, width, height, noiseScale, octaves, persistence, lacunarity);
+          meshGenerator = FindObjectOfType<MeshGenerator>();
+          meshGenerator.CreateGrid(width, height, noiseMap, heightMultiplier, multiplierCurve, detail);
+        
+
+        
     }
 
 

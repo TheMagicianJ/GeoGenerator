@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class MeshGenerator : MonoBehaviour
 {
-    Mesh mesh;
+    readonly Mesh mesh;
     Vector3[] vertices;
     int[] triangles;
 
@@ -20,6 +20,7 @@ public class MeshGenerator : MonoBehaviour
     void Start()
     {
         GetComponent<MeshFilter>().mesh = mesh;
+        UpdateMesh();
 
     }
 
@@ -27,8 +28,6 @@ public class MeshGenerator : MonoBehaviour
     public Mesh UpdateMesh()
     {
 
-        
-        mesh = new Mesh();
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.RecalculateNormals();
@@ -37,11 +36,11 @@ public class MeshGenerator : MonoBehaviour
 
     }
 
-    public void CreateGrid(float[,] heightMap, float heightMultiplier, AnimationCurve multiplierCurve, int detail)
+    public void CreateGrid(int width, int height, float[,] heightMap, float heightMultiplier, AnimationCurve multiplierCurve, int detail)
     {
 
-        int mapWidth = heightMap.GetLength(0);
-        int mapHeight = heightMap.GetLength(1);
+        int mapWidth = width;
+        int mapHeight = height;
 
         int meshIncrementation = detail * 2;
 
@@ -50,50 +49,54 @@ public class MeshGenerator : MonoBehaviour
             meshIncrementation = 1;
         }
 
-        int verticesPerLine = (((mapWidth-1)/(meshIncrementation) + 1));
+        int verticesWidth = (mapWidth-1)/meshIncrementation + 1;
+        int verticesHeight = (mapHeight - 1)/meshIncrementation + 1;
 
-        vertices = new Vector3[verticesPerLine*verticesPerLine];
+        vertices = new Vector3[verticesWidth*verticesHeight];
 
         int index = 0;
-        for (int k = 0; k <= mapHeight - 1; k += meshIncrementation)
-        {
 
-            for (int i = 0; i <= mapWidth - 1; i += meshIncrementation)
+            for (int k = 0; k <= verticesHeight - 1; k ++)
             {
-                float j = multiplierCurve.Evaluate(heightMap[i, k]) * heightMultiplier;
-                vertices[index] = new Vector3(i, j, k);
 
-                if (j > maxNoiseHeight)
+                for (int i = 0; i <= verticesWidth - 1; i ++)
                 {
-                    maxNoiseHeight = j;
-                }
-                else if (j < minNoiseHeight)
-                {
-                    minNoiseHeight = j;
-                }
+                    float j = multiplierCurve.Evaluate(heightMap[i, k]) * heightMultiplier;
+                    vertices[index] = new Vector3(i, j, k);
 
-                index++;
+                    if (j > maxNoiseHeight)
+                    {
+                        maxNoiseHeight = j;
+                    }
+                    else if (j < minNoiseHeight)
+                    {
+                        minNoiseHeight = j;
+                    }
 
+                    index++;
+
+                }
             }
-        }
+        
 
         int vertex = 0;
         int tris = 0;
-        triangles = new int[(verticesPerLine - 1) * (verticesPerLine - 1) * 6];
+        triangles = new int[(verticesWidth - 1) * (verticesHeight - 1) * 6];
+
         for (int z = 0; z < mapHeight - 1; z++)
         {
             for (int x = 0; x < mapWidth - 1; x++)
             {
 
                 triangles[tris] = vertex;
-                triangles[tris + 1] = vertex + verticesPerLine;
+                triangles[tris + 1] = vertex + verticesWidth;
                 triangles[tris + 2] = vertex + 1;
                 triangles[tris + 3] = vertex + 1;
-                triangles[tris + 4] = vertex + verticesPerLine;
-                triangles[tris + 5] = vertex + verticesPerLine + 1;
+                triangles[tris + 4] = vertex + verticesWidth;
+                triangles[tris + 5] = vertex + verticesWidth + 1;
 
                 vertex++;
-                tris = tris + 6;
+                tris += 6;
 
             }
             vertex++;
@@ -106,10 +109,10 @@ public class MeshGenerator : MonoBehaviour
             for (int x = 0; x < mapWidth - 1; x++)
             {
 
-                float height = Mathf.InverseLerp(minNoiseHeight, maxNoiseHeight, vertices[i].y);
+                float nheight = Mathf.InverseLerp(minNoiseHeight, maxNoiseHeight, vertices[i].y);
                 for(int r = 0; r < regions.Length; r++){
 
-                    if( height < regions[r].height){
+                    if( nheight < regions[r].height){
 
                         colours[i] = regions[r].colour;
                         break;
